@@ -32,6 +32,13 @@ public protocol IndicatorInfoProvider {
 
 }
 
+//add branch Refactor
+@objc public protocol PagerTabStripScrollDelegate {
+    @objc optional func pagerTabScrollViewDidScroll(_ scrollView: UIScrollView)
+    @objc optional func pagerTabScrollViewWillBeginDragging(_ scrollView: UIScrollView)
+    @objc optional func pagerTabScrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView)
+}
+
 public protocol PagerTabStripDelegate: class {
 
     func updateIndicator(for viewController: PagerTabStripViewController, fromIndex: Int, toIndex: Int)
@@ -55,6 +62,7 @@ open class PagerTabStripViewController: UIViewController, UIScrollViewDelegate {
 
     open weak var delegate: PagerTabStripDelegate?
     open weak var datasource: PagerTabStripDataSource?
+    open weak var scrollDelegate: PagerTabStripScrollDelegate?
 
     open var pagerBehaviour = PagerTabStripBehaviour.progressive(skipIntermediateViewControllers: true, elasticIndicatorLimit: true)
 
@@ -306,11 +314,17 @@ open class PagerTabStripViewController: UIViewController, UIScrollViewDelegate {
             updateContent()
             lastContentOffset = scrollView.contentOffset.x
         }
+        if let delegate = scrollDelegate?.pagerTabScrollViewDidScroll {
+            delegate(scrollView)
+        }
     }
 
     open func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         if containerView == scrollView {
             lastPageNumber = pageFor(contentOffset: scrollView.contentOffset.x)
+        }
+        if let delegate = scrollDelegate?.pagerTabScrollViewWillBeginDragging {
+            delegate(scrollView)
         }
     }
 
@@ -319,6 +333,9 @@ open class PagerTabStripViewController: UIViewController, UIScrollViewDelegate {
             pagerTabStripChildViewControllersForScrolling = nil
             (navigationController?.view ?? view).isUserInteractionEnabled = true
             updateContent()
+        }
+        if let delegate = scrollDelegate?.pagerTabScrollViewDidEndScrollingAnimation {
+            delegate(scrollView)
         }
     }
 
